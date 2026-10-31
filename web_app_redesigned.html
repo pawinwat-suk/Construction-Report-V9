@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรายงานผลการปฏิบัติงานโครงการ (Government Construction System)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Sarabun & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+        }
+        @page { size: A4 portrait; margin: 0; }
+        .a4-sheet { width: 210mm; height: 296mm; box-sizing: border-box; background: #fff; margin: 0 auto; overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,.18); color: #0f172a; font-family: 'Sarabun', sans-serif; }
+        .a4-inner { transform-origin: top left; }
+        @media print {
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; min-height: 0 !important; height: auto !important; display: block !important; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print, header, footer { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+            main > *, #tab4 > * { margin: 0 !important; }
+            .tab-content:not(#tab4) { display: none !important; }
+            #reportWrap { overflow: visible !important; padding: 0 !important; }
+            .a4-sheet { box-shadow: none !important; margin: 0 !important; break-after: avoid; page-break-after: avoid; }
+        }
+
+        /* ====== UI theme (screen only — print rules above/below are untouched) ====== */
+        @media screen {
+            :root {
+                --ink: #0d2144; --bg: #f2f4f8; --line: #e4e9f1; --line-2: #edf1f7;
+                --text: #1c2740; --muted: #5b6780;
+                --primary: #1f4bd1; --primary-dk: #1a3fae; --tint: #eaf0ff; --tint-line: #cfdcff;
+            }
+            body.bg-slate-100 { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans Thai', 'Sarabun', 'Inter', system-ui, sans-serif; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+            :is(.text-xs, .text-sm, .text-base, .text-lg):not(#reportContent *) { line-height: 1.6; }
+            h1, h2 { line-height: 1.4 !important; letter-spacing: 0 !important; }
+            td, th, input[type=number] { font-variant-numeric: tabular-nums; }
+
+            /* Header */
+            header.bg-blue-950 { background: var(--ink); border-bottom: 1px solid rgba(255,255,255,.06); box-shadow: 0 10px 30px -18px rgba(13,33,68,.7); }
+            header .bg-amber-500 { background: #f2b632; width: 2.7rem; height: 2.7rem; padding: 0; display: grid; place-items: center; border-radius: .85rem; box-shadow: none; font-size: 1.3rem; }
+            header h1 { font-weight: 600; font-size: clamp(1rem, .9rem + .45vw, 1.2rem); }
+            header p.text-blue-200 { color: #9fb3d8; }
+            header button[class], header label[class] { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); border-radius: .7rem; padding: .5rem .9rem; font-weight: 500; box-shadow: none; transition: background-color .15s, border-color .15s; }
+            header button[class]:hover, header label[class]:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.32); }
+            header button.bg-rose-700 { background: rgba(251,113,133,.16); border-color: rgba(251,113,133,.5); color: #ffdbe0; }
+            header button.bg-rose-700:hover { background: rgba(251,113,133,.3); }
+            button:focus-visible { outline: 3px solid rgba(31,75,209,.45); outline-offset: 2px; }
+            header button:focus-visible { outline-color: #fff; }
+
+            /* Tabs: segmented control */
+            main > .overflow-x-auto { background: #e5eaf3; border: 0; box-shadow: none; border-radius: 1rem; padding: .3rem; gap: .25rem; scrollbar-width: none; }
+            main > .overflow-x-auto::-webkit-scrollbar { display: none; }
+            main button.tab-btn { border-radius: .75rem; font-size: .92rem; font-weight: 500; padding: .65rem 1.1rem; color: #4a5873; transition: background-color .15s, color .15s, box-shadow .15s; }
+            main button.tab-btn:not(.bg-blue-900):hover { background: rgba(255,255,255,.65); color: var(--ink); }
+            main button.tab-btn.bg-blue-900 { background: #fff; color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(13,33,68,.08), 0 6px 14px -6px rgba(13,33,68,.25); }
+
+            /* Cards */
+            .tab-content > .bg-white { background: #fff; border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.75rem; box-shadow: 0 1px 2px rgba(13,33,68,.04), 0 18px 40px -28px rgba(13,33,68,.28); }
+            .tab-content:not(.hidden) { animation: tabIn .22s ease both; }
+            @keyframes tabIn { from { opacity: 0; } to { opacity: 1; } }
+            .tab-content .border-b, .tab-content .border-t { border-color: var(--line); }
+            .tab-content h2 { color: var(--ink); font-size: 1.2rem; font-weight: 600; gap: .75rem; }
+            .tab-content h2 > span:first-child { display: inline-grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: .75rem; background: var(--tint); font-size: 1.15rem; }
+            .tab-content h3 { font-weight: 600; }
+            .tab-content label.block { color: #2b3752; font-weight: 600; font-size: .85rem; }
+
+            /* Form controls */
+            :is(.tab-content:not(#tab4), #tab4 > .no-print) :is(input:not([type=file]), select, textarea) { border: 1px solid #d3dbe9; border-radius: .65rem; padding: .6rem .8rem; font-size: .95rem; color: var(--text); transition: border-color .15s, box-shadow .15s; }
+            :is(.tab-content:not(#tab4), #tab4 > .no-print) :is(input:not([type=file]), select, textarea):focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(31,75,209,.14); }
+            :is(.tab-content:not(#tab4), #tab4 > .no-print) :is(input, textarea)::placeholder { color: #9aa6bb; }
+            :is(.tab-content:not(#tab4), #tab4 > .no-print) select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%235b6780' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .8rem center; padding-right: 2.2rem; }
+            .tab-content:not(#tab4) :is(input:not([type=file]), select).text-xs { padding: .42rem .6rem; font-size: .85rem; border-radius: .55rem; border-color: #dbe2ee; }
+            .tab-content:not(#tab4) :is(input:not([type=file]), select).text-xs[class*="w-14"] { padding: .35rem .25rem; }
+            .tab-content:not(#tab4) textarea { line-height: 1.6; resize: vertical; }
+            .tab-content input[type=file] { font-size: .8rem; color: var(--muted); }
+            .tab-content input[type=file]::file-selector-button { border: 1px solid var(--tint-line); background: var(--tint); color: var(--primary); font-family: inherit; font-weight: 600; border-radius: .6rem; padding: .45rem .9rem; margin-right: .75rem; cursor: pointer; transition: background-color .15s; }
+            .tab-content input[type=file]::file-selector-button:hover { background: #dbe6ff; }
+
+            /* Buttons */
+            .tab-content button[class] { font-weight: 600; border-radius: .7rem; cursor: pointer; transition: background-color .15s, box-shadow .15s, transform .1s; }
+            .tab-content button[class]:active { transform: translateY(1px); }
+            .tab-content button.bg-blue-900 { background: var(--primary); padding: .7rem 1.4rem; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 8px 16px -8px rgba(31,75,209,.6); }
+            .tab-content button.bg-blue-900:hover { background: var(--primary-dk); }
+            .tab-content button.bg-emerald-600 { background: #0f9468; box-shadow: 0 8px 16px -8px rgba(15,148,104,.6); }
+            .tab-content button.bg-emerald-600:hover { background: #0b7f59; }
+            .tab-content button.bg-blue-600 { background: var(--tint); color: var(--primary); border: 1px solid var(--tint-line); }
+            .tab-content button.bg-blue-600:hover { background: #dbe6ff; }
+            .tab-content button.bg-amber-600 { background: #fff4e0; color: #9a5200; border: 1px solid #f3d9a8; }
+            .tab-content button.bg-amber-600:hover { background: #ffe9c2; }
+            .tab-content button.bg-slate-200 { background: #f1f4f9; color: #34405a; border: 1px solid #dbe2ee; }
+            .tab-content button.bg-slate-200:hover { background: #e4eaf4; }
+            .tab-content button.text-rose-600 { display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; padding: 0; border-radius: .55rem; flex: none; }
+            .tab-content button.text-rose-600:hover { background: #fde8ea; }
+            .tab-content button.bg-rose-600 { width: 1.6rem; height: 1.6rem; box-shadow: 0 2px 8px rgba(13,33,68,.3); }
+
+            /* Tables */
+            .tab-content:not(#tab4) .overflow-x-auto { border: 1px solid var(--line); border-radius: 1rem; background: #fff; }
+            .tab-content:not(#tab4) table { border: 0; border-collapse: separate; border-spacing: 0; }
+            .tab-content:not(#tab4) :is(th, td) { border: 0; border-bottom: 1px solid var(--line-2); border-right: 1px solid var(--line-2); padding: .6rem .75rem; }
+            .tab-content:not(#tab4) td.p-1 { padding: .35rem; }
+            .tab-content:not(#tab4) :is(th, td):last-child { border-right: 0; }
+            .tab-content:not(#tab4) thead th { background: #f3f6fb; color: #4a5873; font-weight: 600; font-size: .8rem; border-bottom: 1px solid var(--line); }
+            .tab-content:not(#tab4) tbody tr:hover > td { background-color: #f7f9fd; }
+            .tab-content:not(#tab4) tbody tr:last-child > td, .tab-content:not(#tab4) tfoot td { border-bottom: 0; }
+            .tab-content:not(#tab4) :is(td, th).sticky { box-shadow: 1px 0 0 var(--line); }
+
+            /* Info panels */
+            .tab-content:not(#tab4) div.bg-blue-50 { background: #f0f5ff; border: 1px solid #d6e2ff; border-radius: 1rem; }
+            .tab-content:not(#tab4) div.bg-emerald-50 { background: #effaf4; border: 1px solid #cdeedd; border-radius: 1rem; }
+            .tab-content:not(#tab4) div.bg-sky-50 { background: #eff8fd; border: 1px solid #d1e9f5; border-radius: 1rem; }
+            .tab-content:not(#tab4) div.bg-slate-50.border { background: #f8fafd; border-color: var(--line); border-radius: .9rem; }
+            .tab-content:not(#tab4) .bg-blue-50\/70 { background: #eef3ff; border: 1px solid var(--tint-line); border-left: 4px solid var(--primary); border-radius: 1rem; padding: 1.1rem 1.25rem; }
+            .tab-content:not(#tab4) #budget { font-size: 1.6rem; font-weight: 700; color: var(--ink); padding: .7rem 1rem; }
+            #bahtTextDisplay { color: #27428a; font-size: .95rem; }
+            #weightWarning { border-radius: .8rem; padding: .8rem 1rem; font-size: .9rem; }
+            #weekCountBadge { border-radius: .6rem; }
+            #reportSelector, #reportWeekSelector { min-width: 14rem; }
+
+            /* Report preview as paper on a desk */
+            #tab4 #reportWrap { background: #dfe5ef; border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.75rem 1rem; }
+            .a4-sheet { box-shadow: 0 2px 4px rgba(13,33,68,.08), 0 24px 50px -24px rgba(13,33,68,.45); }
+
+            /* Toast, footer, scrollbars */
+            #toastMessage { border-radius: .9rem; padding: .9rem 1.25rem; font-weight: 500; max-width: min(26rem, calc(100vw - 2rem)); box-shadow: 0 18px 40px -16px rgba(13,33,68,.55); }
+            #toastMessage:not(.hidden) { animation: toastIn .25s ease-out; }
+            @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+            footer.bg-slate-800 { background: var(--ink); color: #8fa3c9; }
+            ::-webkit-scrollbar { height: 10px; width: 10px; } ::-webkit-scrollbar-thumb { background: #c3ccdb; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; } ::-webkit-scrollbar-thumb:hover { background: #9aa8c0; background-clip: content-box; }
+
+            @media (max-width: 640px) { .tab-content > .bg-white { padding: 1rem; border-radius: 1rem; } .tab-content h2 { font-size: 1.05rem; } }
+            @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-blue-950 text-white shadow-md no-print sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500 text-blue-950 p-2 rounded-lg font-bold text-lg shadow">🇹🇭</div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-wide">ระบบควบคุมงานและรายงานผลโครงการก่อสร้าง</h1>
+                    <p class="text-xs text-blue-200">งานสารบรรณภาครัฐ (Offline Local Storage Edition)</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="app.exportBackup()" class="bg-blue-800 hover:bg-blue-700 text-white text-xs md:text-sm px-3 py-2 rounded-md font-medium transition shadow flex items-center gap-1">
+                    💾 สำรองข้อมูล (Backup)
+                </button>
+                <label class="bg-blue-800 hover:bg-blue-700 text-white text-xs md:text-sm px-3 py-2 rounded-md font-medium transition shadow cursor-pointer flex items-center gap-1">
+                    📂 กู้คืน (Restore)
+                    <input type="file" id="restoreFile" accept=".json" onchange="app.importBackup(event)" class="hidden">
+                </label>
+                <button onclick="app.resetDemoData()" class="bg-rose-700 hover:bg-rose-600 text-white text-xs md:text-sm px-3 py-2 rounded-md font-medium transition shadow">
+                    🔄 โหลดข้อมูล Demo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 space-y-6">
+
+        <!-- Notification Banner -->
+        <div id="toastMessage" class="hidden p-4 rounded-lg shadow-md text-sm font-medium transition duration-300"></div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-2 no-print overflow-x-auto flex gap-2">
+            <button onclick="app.switchTab('tab1')" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap bg-blue-900 text-white" data-target="tab1">
+                📋 1. ข้อมูลโครงการ & หนังสือ
+            </button>
+            <button onclick="app.switchTab('tab2')" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap text-slate-600 hover:bg-slate-100" data-target="tab2">
+                📊 2. ปริมาณงาน (BOQ) & แผน-ผล
+            </button>
+            <button onclick="app.switchTab('tab3')" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap text-slate-600 hover:bg-slate-100" data-target="tab3">
+                ☀️ 3. ผลปฏิบัติงานประจำวัน
+            </button>
+            <button onclick="app.switchTab('tab4')" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap text-slate-600 hover:bg-slate-100" data-target="tab4">
+                📑 4. รายงานราชการ & พรีวิว
+            </button>
+        </div>
+
+        <!-- ================= TAB 1: PROJECT & MEMO INFO ================= -->
+        <div id="tab1" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <span>🏛️</span> หมวดที่ 1: ข้อมูลโครงการและหนังสือภายใน (บันทึกข้อความ)
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-slate-600">รูปแบบตัวเลขเอกสาร:</span>
+                        <select id="numberStyle" onchange="app.updateField('numberStyle', this.value)" class="p-1.5 border rounded-lg text-sm bg-slate-50 font-medium">
+                            <option value="ARABIC">เลขอารบิก (1, 2, 3)</option>
+                            <option value="THAI">เลขไทย (๑, ๒, ๓)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">ส่วนราชการเจ้าของเรื่อง</label>
+                        <input type="text" id="govtDepartment" oninput="app.updateField('govtDepartment', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">เลขที่หนังสือภายใน</label>
+                        <input type="text" id="documentNo" oninput="app.updateField('documentNo', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">เรียน (ผู้รับรายงาน)</label>
+                        <input type="text" id="reportTo" oninput="app.updateField('reportTo', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">วันที่ของหนังสือ</label>
+                        <input type="date" id="letterDate" onchange="app.updateField('letterDate', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700">เรื่อง</label>
+                        <input type="text" id="subject" oninput="app.updateField('subject', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700">ชื่อโครงการก่อสร้าง</label>
+                        <input type="text" id="projectName" oninput="app.updateField('projectName', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm font-semibold">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700">สถานที่ก่อสร้าง</label>
+                        <input type="text" id="constructionSite" oninput="app.updateField('constructionSite', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+
+                    <!-- Garuda Emblem Customizer -->
+                    <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                        <label class="block text-sm font-bold text-slate-900">รูปตราครุฑสำหรับหัวข้อบันทึกข้อความ (อัปโหลดรูปภาพและปรับขนาด)</label>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <input type="file" accept="image/*" onchange="app.handleGarudaUpload(event)" class="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold">ความสูงครุฑ (ซม.):</span>
+                                <input type="number" step="0.1" min="1" max="5" id="garudaHeight" value="1.5" oninput="app.updateGarudaHeight(parseFloat(this.value))" class="w-20 p-1 border rounded text-xs text-center font-medium">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <div class="w-24 h-24 border rounded bg-white flex items-center justify-center p-1 overflow-hidden">
+                                <img id="garudaPreviewImg" src="https://upload.wikimedia.org/wikipedia/commons/8/89/%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%95%E0%B8%B2%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%B4%E0%B8%A9.svg" class="object-contain max-h-full max-w-full">
+                            </div>
+                            <span class="text-xs text-slate-500">ตัวอย่างตราครุฑที่จะแสดงบนหัวกระดาษบันทึกข้อความ</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">ผู้ว่าจ้าง (หน่วยงาน)</label>
+                        <input type="text" id="employerName" oninput="app.updateField('employerName', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">ผู้รับจ้าง (ผู้รับเหมา)</label>
+                        <input type="text" id="contractorName" oninput="app.updateField('contractorName', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">เลขที่สัญญาจ้าง</label>
+                        <input type="text" id="contractNo" oninput="app.updateField('contractNo', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">ลงวันที่สัญญาจ้าง</label>
+                        <input type="date" id="contractDate" onchange="app.updateField('contractDate', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+
+                    <!-- Budget with Thai Baht Text -->
+                    <div class="md:col-span-2 bg-blue-50/70 p-4 rounded-xl border border-blue-200">
+                        <label class="block text-sm font-bold text-blue-900">วงเงินงบประมาณตามสัญญา (บาท)</label>
+                        <input type="number" id="budget" step="0.01" oninput="app.updateBudget(this.value)" class="w-full mt-1.5 p-3 border rounded-lg text-lg font-bold bg-white text-blue-950">
+                        <div id="bahtTextDisplay" class="mt-2 text-sm font-semibold text-blue-800">
+                            ตัวอักษรไทย: (บาท)
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">ระยะเวลาตามสัญญา (วัน)</label>
+                        <input type="number" id="contractDurationDays" oninput="app.updateDuration(this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">วันเริ่มต้นสัญญาวันที่</label>
+                        <input type="date" id="startDate" onchange="app.updateStartDate(this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">วันสิ้นสุดสัญญาวันที่ (คำนวณอัตโนมัติ)</label>
+                        <input type="date" id="endDate" onchange="app.updateField('endDate', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm bg-slate-100 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">อัตราค่าปรับผิดสัญญาต่อวัน</label>
+                        <div class="flex gap-2 mt-1.5">
+                            <select id="fineRateType" onchange="app.updateField('fineRateType', this.value)" class="p-2 border rounded-lg text-sm bg-white">
+                                <option value="PERCENT">% วงเงิน/วัน</option>
+                                <option value="FIXED">บาทถ้วน/วัน</option>
+                            </select>
+                            <input type="number" step="0.01" id="fineRateValue" oninput="app.updateField('fineRateValue', parseFloat(this.value))" class="flex-1 p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700">ปัญหาและอุปสรรคประจำสัปดาห์</label>
+                        <textarea id="problemsAndObstacles" rows="3" oninput="app.updateField('problemsAndObstacles', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700">ความเห็นคณะกรรมการตรวจรับพัสดุ</label>
+                        <textarea id="committeeComment" rows="3" oninput="app.updateField('committeeComment', this.value)" class="w-full mt-1.5 p-2.5 border rounded-lg text-sm"></textarea>
+                    </div>
+                </div>
+
+                <!-- Staff, Committee & Contractor Personnel Management -->
+                <div class="border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-800 text-base">ผู้ควบคุมงาน (ฝ่ายผู้ว่าจ้าง)</h3>
+                            <button onclick="app.addStaff('SUPERVISOR')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded-md font-semibold">+ เพิ่ม</button>
+                        </div>
+                        <div id="supervisorList" class="space-y-2"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-800 text-base">ผู้ควบคุมงาน (ฝ่ายผู้รับจ้าง)</h3>
+                            <button onclick="app.addStaff('CONTRACTOR_SUPERVISOR')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-xs rounded-md font-semibold">+ เพิ่ม</button>
+                        </div>
+                        <div id="contractorSupervisorList" class="space-y-2"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-800 text-base">คณะกรรมการตรวจรับพัสดุ</h3>
+                            <button onclick="app.addStaff('COMMITTEE_MEMBER')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded-md font-semibold">+ เพิ่ม</button>
+                        </div>
+                        <div id="committeeList" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button onclick="app.saveProjectData()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-lg shadow transition">
+                        💾 บันทึกข้อมูลหมวดที่ 1
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: BOQ & PLAN/ACTUAL ================= -->
+        <div id="tab2" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                <div class="flex flex-wrap justify-between items-center border-b pb-4 gap-3">
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <span>📊</span> หมวดที่ 2: ปริมาณงาน (BOQ ย่อ) & กำหนดแผนงาน-ผลงานรายสัปดาห์
+                    </h2>
+                    <button onclick="app.addWorkItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg font-semibold shadow">
+                        + เพิ่มรายการงาน (BOQ)
+                    </button>
+                </div>
+
+                <!-- Weight Warning Banner -->
+                <div id="weightWarning" class="p-3 rounded-lg text-sm font-semibold flex justify-between items-center bg-amber-100 text-amber-900 border border-amber-300">
+                    <span id="weightText">กำลังตรวจสอบน้ำหนักงานรวม...</span>
+                </div>
+
+                <!-- BOQ Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border-collapse border border-slate-300">
+                        <thead class="bg-slate-100 text-slate-700 font-bold">
+                            <tr>
+                                <th class="border p-2.5 w-12 text-center">ลำดับ</th>
+                                <th class="border p-2.5 w-40">หมวดงาน</th>
+                                <th class="border p-2.5">รายการงาน</th>
+                                <th class="border p-2.5 w-24 text-center">หน่วย</th>
+                                <th class="border p-2.5 w-28 text-right">ปริมาณทั้งหมด</th>
+                                <th class="border p-2.5 w-28 text-right">น้ำหนัก (%)</th>
+                                <th class="border p-2.5 w-16 text-center">ลบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="boqTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 1. Separate Table: Weekly Plan Data -->
+                <div class="border-t pt-6 space-y-4">
+                    <div class="flex flex-wrap justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <div>
+                            <h3 class="text-base font-bold text-blue-950 flex items-center gap-2">
+                                📈 1. ตารางป้อนข้อมูลแผนงาน (Plan Data Table)
+                            </h3>
+                            <p class="text-xs text-blue-800">กรอก % ความสำเร็จของงานแต่ละข้อในสัปดาห์นั้นตามแผน (รวมทุกสัปดาห์ของแต่ละข้อ = 100% ของงานข้อนั้น ระบบคูณน้ำหนักให้อัตโนมัติ) (อ้างอิงช่วงวันจันทร์-อาทิตย์ ตามปฏิทินสัญญาจริง)</p>
+                        </div>
+                        <div id="weekCountBadge" class="text-xs font-semibold bg-white px-3 py-1.5 rounded border border-blue-300 text-blue-900">
+                            จำนวนสัปดาห์สัญญา: 0 สัปดาห์
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse border border-slate-300">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr id="planMatrixHeader">
+                                    <th class="border p-2 w-48 sticky left-0 bg-slate-100 z-10">รายการงาน (ปริมาณรวม)</th>
+                                    <th class="border p-2 w-16 text-center">น้ำหนัก%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="planMatrixBody"></tbody>
+                            <tfoot id="planMatrixFooter" class="bg-blue-50 font-bold text-xs border-t-2 border-blue-300"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Separate Table: Weekly Actual Data -->
+                <div class="border-t pt-6 space-y-4">
+                    <div class="flex flex-wrap justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                        <div>
+                            <h3 class="text-base font-bold text-emerald-950 flex items-center gap-2">
+                                🚩 2. ตารางป้อนข้อมูลผลงานจริง (Actual Data Table)
+                            </h3>
+                            <p class="text-xs text-emerald-800">กรอก % ของงานแต่ละข้อที่ทำได้จริงในสัปดาห์นั้น (รวมไม่เกิน 100% ต่อข้อ) เพื่อนำไปเปรียบเทียบกับแผนงานและสร้างกราฟ S-Curve</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse border border-slate-300">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr id="actualMatrixHeader">
+                                    <th class="border p-2 w-48 sticky left-0 bg-slate-100 z-10">รายการงาน (ปริมาณรวม)</th>
+                                    <th class="border p-2 w-16 text-center">น้ำหนัก%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="actualMatrixBody"></tbody>
+                            <tfoot id="actualMatrixFooter" class="bg-emerald-50 font-bold text-xs border-t-2 border-emerald-300"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button onclick="app.saveProjectData()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-lg shadow transition">
+                        💾 บันทึกตารางงาน & แผน-ผล
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: DAILY LOG ================= -->
+        <div id="tab3" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                <div class="flex flex-wrap justify-between items-center border-b pb-4 gap-3">
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <span>☀️</span> หมวดที่ 3: ผลการปฏิบัติงานประจำวันหน้างาน
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="app.copyYesterdayLog()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs md:text-sm px-3 py-2 rounded-lg font-semibold shadow">
+                            📋 คัดลอกจากเมื่อวาน
+                        </button>
+                        <input type="date" id="selectedLogDate" onchange="app.loadDailyLogForDate(this.value)" class="p-2 border rounded-lg text-sm bg-slate-50 font-medium">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">เวลาเริ่มเข้าควบคุมงาน</label>
+                        <input type="time" id="timeStart" value="08:00" class="w-full mt-1 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">เวลาสิ้นสุดการปฏิบัติงาน</label>
+                        <input type="time" id="timeEnd" value="17:00" class="w-full mt-1 p-2.5 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">สถานะการทำงานหน้างาน</label>
+                        <select id="workStatus" class="w-full mt-1 p-2.5 border rounded-lg text-sm bg-white font-semibold text-emerald-700">
+                            <option value="NORMAL">✅ ปฏิบัติงานได้ตามปกติ</option>
+                            <option value="STOP_RAIN">🌧️ ฝนตกหนัก หยุดงานบางส่วน</option>
+                            <option value="STOP_HOLIDAY">🛑 วันหยุดประจำสัปดาห์ / นักขัตฤกษ์</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Weather Status -->
+                <div class="bg-sky-50 p-4 rounded-xl border border-sky-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600">สภาพอากาศช่วงเช้า</label>
+                        <input type="text" id="weatherMorning" value="แจ่มใส" class="w-full mt-1 p-2 border rounded-lg text-xs bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600">สภาพอากาศช่วงบ่าย</label>
+                        <input type="text" id="weatherAfternoon" value="มีเมฆบางส่วน" class="w-full mt-1 p-2 border rounded-lg text-xs bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600">สภาพอากาศช่วงเย็น</label>
+                        <input type="text" id="weatherEvening" value="แจ่มใส" class="w-full mt-1 p-2 border rounded-lg text-xs bg-white">
+                    </div>
+                </div>
+
+                <!-- Labor & Workforce -->
+                <div class="border-t pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-slate-800">จำนวนพนักงานและแรงงานหน้างาน</h3>
+                        <button onclick="app.addLaborRow()" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded font-semibold">+ เพิ่มประเภทแรงงาน</button>
+                    </div>
+                    <div id="laborRows" class="space-y-2"></div>
+                </div>
+
+                <!-- Machines & Equipment -->
+                <div class="border-t pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-slate-800">เครื่องจักรและอุปกรณ์ที่ใช้ปฏิบัติงาน</h3>
+                        <button onclick="app.addMachineRow()" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded font-semibold">+ เพิ่มเครื่องจักร</button>
+                    </div>
+                    <div id="machineRows" class="space-y-2"></div>
+                </div>
+
+                <!-- Daily Photos -->
+                <div class="border-t pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-slate-800">รูปถ่ายการปฏิบัติงานหน้างาน (สูงสุด 6 รูป)</h3>
+                        <input type="file" accept="image/*" multiple onchange="app.handlePhotoUpload(event)" class="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3"></div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button onclick="app.saveDailyLog()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-lg shadow transition">
+                        💾 บันทึกผลปฏิบัติงานประจำวัน
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: OFFICIAL REPORTS PREVIEW ================= -->
+        <div id="tab4" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 no-print space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <span>📑</span> หมวดที่ 4: ส่วนรายงานและการพิมพ์ (Official Document Previews)
+                    </h2>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="reportSelector" onchange="app.renderReport()" class="p-2 border rounded-lg text-sm bg-slate-50 font-semibold text-blue-950">
+                            <option value="memo">รายงานที่ 1: บันทึกข้อความ (ตามแบบสารบรรณ)</option>
+                            <option value="weekly">รายงานที่ 2: รายงานผลประจำสัปดาห์ (A4 1 หน้า)</option>
+                            <option value="daily">รายงานที่ 3: รายงานผลการปฏิบัติงานประจำวัน</option>
+                            <option value="scurve">รายงานที่ 4: กราฟ S-Curve & Dashboard สรุป</option>
+                        </select>
+                        <select id="reportWeekSelector" onchange="app.renderReport()" class="p-2 border rounded-lg text-sm bg-slate-50">
+                            <!-- Populated dynamically based on calendar weeks -->
+                        </select>
+                        <button onclick="window.print()" class="bg-blue-900 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg font-bold shadow flex items-center gap-1.5">
+                            🖨️ พิมพ์ / บันทึก PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print Preview Container Sheet -->
+            <div id="reportWrap" class="overflow-x-auto pb-4">
+                <div id="reportPreviewContainer" class="a4-sheet leading-relaxed"><div id="reportContent" class="a4-inner"></div></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer with Developer Credit (Web App Only, Hidden in Print & Export) -->
+    <footer class="bg-slate-800 text-slate-400 py-6 text-center text-xs no-print mt-12 space-y-1">
+        <p>ระบบควบคุมงานก่อสร้างภาครัฐไทย • ออกแบบตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. 2526 และที่แก้ไขเพิ่มเติม</p>
+        <p class="text-slate-300 font-medium">ผู้พัฒนาระบบ: <span class="text-amber-400 font-bold">นายปวินท์วัฒน์ สุขขี</span></p>
+    </footer>
+
+    <!-- Application Script Engine -->
+    <script>
+        // Thai Baht Text Utility
+        function bahtText(num) {
+            if (isNaN(num) || num === 0) return 'ศูนย์บาทถ้วน';
+            const numbers = ['', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+            const units = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+            let strNum = num.toFixed(2);
+            let parts = strNum.split('.');
+            let integerPart = parseInt(parts[0], 10);
+            let decimalPart = parseInt(parts[1], 10);
+            let result = '';
+
+            if (integerPart > 0) {
+                let intStr = integerPart.toString();
+                let len = intStr.length;
+                for (let i = 0; i < len; i++) {
+                    let d = parseInt(intStr[i], 10);
+                    let pos = len - i - 1;
+                    if (d !== 0) {
+                        if (pos === 1 && d === 1) result += 'สิบ';
+                        else if (pos === 1 && d === 2) result += 'ยี่สิบ';
+                        else if (pos === 0 && d === 1 && len > 1) result += 'เอ็ด';
+                        else result += numbers[d] + units[pos % 6];
+                    }
+                    if (pos % 6 === 0 && pos > 0) result += 'ล้าน';
+                }
+                result += 'บาท';
+            }
+
+            if (decimalPart === 0) {
+                result += 'ถ้วน';
+            } else {
+                let decStr = decimalPart.toString().padStart(2, '0');
+                let d1 = parseInt(decStr[0], 10);
+                let d2 = parseInt(decStr[1], 10);
+                if (d1 === 1) result += 'สิบ';
+                else if (d1 === 2) result += 'ยี่สิบ';
+                else if (d1 > 0) result += numbers[d1] + 'สิบ';
+                if (d2 === 1 && d1 !== 0) result += 'เอ็ด';
+                else if (d2 > 0) result += numbers[d2];
+                result += 'สตางค์';
+            }
+            return '(' + result + ')';
+        }
+
+        // Thai Digits Converter
+        function toThaiDigits(str) {
+            if (!str) return '';
+            const thaiDigits = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+            return str.toString().replace(/[0-9]/g, d => thaiDigits[d]);
+        }
+
+        // Thai Date Formatter
+        function formatThaiDate(dateStr, useThaiNum = false) {
+            if (!dateStr) return '';
+            const d = parseISO(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const day = d.getDate();
+            const month = months[d.getMonth()];
+            const year = d.getFullYear() + 543;
+            let formatted = `${day} ${month} ${year}`;
+            return useThaiNum ? toThaiDigits(formatted) : formatted;
+        }
+
+        function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+        function parseISO(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3], 12) : new Date(NaN); }
+        function toISO(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+        function todayISO() { return toISO(new Date()); }
+
+        // Default Demo Data
+        const defaultDemoProject = {
+            govtDepartment: 'สำนักงานเทศบาลตำบลโคกสูง อำเภอเมือง จังหวัดชัยภูมิ',
+            documentNo: 'ชม ๕๓๐๑/๑๒๓',
+            reportTo: 'นายกเทศมนตรีตำบลโคกสูง',
+            letterDate: '2026-03-05',
+            subject: 'รายงานผลการปฏิบัติงานโครงการก่อสร้าง ประจำสัปดาห์ที่ 5',
+            projectName: 'โครงการก่อสร้างอาคารสำนักงานเทศบาลตำบลโคกสูง (2 ชั้น)',
+            constructionSite: 'บริเวณพื้นที่สำนักงานเทศบาลตำบลโคกสูง (เดิม)',
+            employerName: 'สำนักงานเทศบาลตำบลโคกสูง โดย นายสมชาย ใจดี',
+            contractorName: 'ห้างหุ้นส่วนจำกัด โคกสูงการโยธา',
+            contractNo: 'สัญญาจ้างเลขที่ ๑๒/๒๕๖๙',
+            contractDate: '2026-01-15',
+            budget: 4500000,
+            contractDurationDays: 180,
+            startDate: '2026-02-02',
+            endDate: '2026-07-31',
+            fineRateType: 'PERCENT',
+            fineRateValue: 0.1,
+            numberStyle: 'ARABIC',
+            progressMode: 'PERCENT',
+            garudaHeight: 1.5,
+            garudaImgUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/89/%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%95%E0%B8%B2%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%B4%E0%B8%A9.svg',
+            problemsAndObstacles: '- ฝนตกหนักในช่วงบ่ายวันที่ 3-4 มีนาคม 2569 ทำให้งานเทคอนกรีตฐานรากต้องหยุดชะงักชั่วคราว\n- การขนส่งเหล็กเสริมล่าช้าเล็กน้อยจากผู้จำหน่ายรายย่อย แต่ไม่กระทบแผนรวม',
+            committeeComment: 'คณะกรรมการตรวจรับพัสดุได้ตรวจสอบผลงานแล้ว เห็นว่าเป็นไปตามมาตรฐานและสัญญาจ้าง',
+            staff: [
+                { role: 'SUPERVISOR', name: 'นายสมศักดิ์ ช่างโยธา', position: 'วิศวกรโยธาชำนาญการ', licenseNo: '-' },
+                { role: 'CONTRACTOR_SUPERVISOR', name: 'นายอนันต์ ก่อสร้างดี', position: 'วิศวกรโครงการ (ผู้ควบคุมงานฝ่ายผู้รับจ้าง)', licenseNo: 'ภย. 123456' },
+                { role: 'COMMITTEE_CHAIRMAN', name: 'นายวิชัย มั่นคง', position: 'ผู้อำนวยการกองช่าง', licenseNo: '-' },
+                { role: 'COMMITTEE_MEMBER', name: 'นายกิตติศักดิ์ รักงาน', position: 'นายช่างโยธาชำนาญงาน', licenseNo: '-' },
+                { role: 'COMMITTEE_MEMBER', name: 'นางสาวนภา สุขสวัสดิ์', position: 'นิติกรชำนาญการ', licenseNo: '-' }
+            ],
+            workItems: [
+                { id: '1', group: 'งานฐานราก', name: 'งานขุดดินและถมกลับ', unit: 'ลบ.ม.', qty: 450, weight: 5, plan: [20.0, 40.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], actual: [20.0, 40.0, 33.33, 6.67, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] },
+                { id: '2', group: 'งานฐานราก', name: 'งานคอนกรีตหยาบและฐานราก', unit: 'ลบ.ม.', qty: 120, weight: 20, plan: [0.0, 20.0, 40.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], actual: [0.0, 16.67, 33.33, 41.67, 8.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] },
+                { id: '3', group: 'งานโครงสร้าง', name: 'งานเสา คสล. ชั้นที่ 1', unit: 'ต้น', qty: 24, weight: 25, plan: [0.0, 0.0, 25.0, 50.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], actual: [0.0, 0.0, 16.67, 41.67, 33.33, 8.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] },
+                { id: '4', group: 'งานโครงสร้าง', name: 'งานคานและพื้น คสล. ชั้นที่ 2', unit: 'ตร.ม.', qty: 280, weight: 30, plan: [0.0, 0.0, 0.0, 20.0, 40.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], actual: [0.0, 0.0, 0.0, 14.29, 32.14, 35.71, 17.86, 0.0, 0.0, 0.0, 0.0, 0.0] },
+                { id: '5', group: 'งานสถาปัตยกรรม', name: 'งานผนังอิฐฉาบปูน', unit: 'ตร.ม.', qty: 650, weight: 20, plan: [0.0, 0.0, 0.0, 0.0, 20.0, 40.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0], actual: [0.0, 0.0, 0.0, 0.0, 15.38, 30.77, 38.46, 15.38, 0.0, 0.0, 0.0, 0.0] }
+            ],
+            dailyLogs: {
+                '2026-03-05': {
+                    timeStart: '08:00',
+                    timeEnd: '17:00',
+                    workStatus: 'NORMAL',
+                    weatherMorning: 'แจ่มใส',
+                    weatherAfternoon: 'มีเมฆบางส่วน',
+                    weatherEvening: 'แจ่มใส',
+                    labors: [
+                        { type: 'วิศวกร/ผู้ควบคุมงาน', count: 1 },
+                        { type: 'ช่างฝีมือ', count: 4 },
+                        { type: 'คนงานทั่วไป', count: 8 }
+                    ],
+                    machines: [
+                        { type: 'รถขุด PC200', count: 1, status: 'WORKING' },
+                        { type: 'รถบดสั่นสะเทือน', count: 1, status: 'READY' }
+                    ],
+                    photos: []
+                }
+            }
+        };
+
+        class ConstructionApp {
+            constructor() {
+                this.storageKey = 'gov_construction_project_db';
+                this.loadData();
+                this.initUI();
+                this.renderReport();
+            }
+
+            loadData() {
+                const local = localStorage.getItem(this.storageKey);
+                if (local) {
+                    try {
+                        this.data = this.normalizeData(JSON.parse(local));
+                    } catch (e) {
+                        this.data = JSON.parse(JSON.stringify(defaultDemoProject));
+                    }
+                } else {
+                    this.data = JSON.parse(JSON.stringify(defaultDemoProject));
+                }
+            }
+
+            normalizeData(o) {
+                const legacy = !!o && o.progressMode !== 'PERCENT';
+                const d = Object.assign(JSON.parse(JSON.stringify(defaultDemoProject)), o || {});
+                if (!Array.isArray(d.staff)) d.staff = [];
+                if (!Array.isArray(d.workItems)) d.workItems = [];
+                if (!d.dailyLogs || typeof d.dailyLogs !== 'object') d.dailyLogs = {};
+                d.workItems.forEach(it => { if (!Array.isArray(it.plan)) it.plan = []; if (!Array.isArray(it.actual)) it.actual = []; });
+                if (legacy) { // ข้อมูลเวอร์ชันเก่าเก็บเป็นปริมาณ -> แปลงเป็น % ของงานแต่ละข้อ
+                    d.workItems.forEach(it => { const q = parseFloat(it.qty) || 0; ['plan', 'actual'].forEach(k => { it[k] = it[k].map(v => q > 0 ? Math.round((parseFloat(v) || 0) / q * 10000) / 100 : 0); }); });
+                }
+                d.progressMode = 'PERCENT';
+                return d;
+            }
+
+            escapeDeep(v) {
+                if (typeof v === 'string') return esc(v);
+                if (Array.isArray(v)) return v.map(x => this.escapeDeep(x));
+                if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = this.escapeDeep(v[k]); return o; }
+                return v;
+            }
+
+            // ร้อยละความก้าวหน้า: ปริมาณสะสมของแต่ละรายการ / ปริมาณรวม x น้ำหนัก (ไม่เกินน้ำหนักของรายการ)
+            calcProgress() {
+                const n = this.calculateCalendarWeeks().length;
+                const planCum = Array(n).fill(0), actualCum = Array(n).fill(0);
+                this.data.workItems.forEach(it => {
+                    const q = parseFloat(it.qty) || 0, wt = parseFloat(it.weight) || 0;
+                    let p = 0, a = 0;
+                    for (let w = 0; w < n; w++) {
+                        p += parseFloat((it.plan || [])[w]) || 0;
+                        a += parseFloat((it.actual || [])[w]) || 0;
+                        planCum[w] += Math.min(p, 100) / 100 * wt; actualCum[w] += Math.min(a, 100) / 100 * wt;
+                    }
+                });
+                const wk = c => c.map((v, i) => v - (i ? c[i - 1] : 0));
+                return { n, planCum, actualCum, diffCum: actualCum.map((v, i) => v - planCum[i]), planWeekly: wk(planCum), actualWeekly: wk(actualCum) };
+            }
+
+            refreshMatrixFooters() {
+                const P = this.calcProgress();
+                const mk = (id, wkl, cuml, wkv, cumv, c1, c2, c3) => {
+                    const el = document.getElementById(id); if (!el) return;
+                    el.innerHTML = `<tr><td class="border p-2 sticky left-0 ${c1} ${c2}">${wkl}</td><td class="border p-2 text-center">-</td>${wkv.map(p => `<td class="border p-1 text-center ${c2}">${p.toFixed(2)}%</td>`).join('')}</tr>
+                        <tr><td class="border p-2 sticky left-0 ${c3} font-extrabold">${cuml}</td><td class="border p-2 text-center">-</td>${cumv.map(p => `<td class="border p-1 text-center font-extrabold">${p.toFixed(2)}%</td>`).join('')}</tr>`;
+                };
+                mk('planMatrixFooter', 'ร้อยละแผนงานรายสัปดาห์ (%)', 'ร้อยละแผนงานสะสม (%)', P.planWeekly, P.planCum, 'bg-blue-50', 'text-blue-900', 'bg-blue-100 text-blue-950');
+                mk('actualMatrixFooter', 'ร้อยละผลงานรายสัปดาห์ (%)', 'ร้อยละผลงานสะสม (%)', P.actualWeekly, P.actualCum, 'bg-emerald-50', 'text-emerald-900', 'bg-emerald-100 text-emerald-950');
+                this.data.workItems.forEach((it, i) => ['plan', 'actual'].forEach(k => {
+                    const el = document.getElementById((k === 'plan' ? 'sumP' : 'sumA') + i); if (!el) return;
+                    const s = (it[k] || []).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+                    el.textContent = 'รวม ' + (Math.round(s * 100) / 100) + '%';
+                    el.className = 'block text-[10px] ' + (Math.abs(s - 100) < 0.01 ? 'text-emerald-600' : s > 100 ? 'text-rose-600' : 'text-amber-600');
+                }));
+            }
+
+            collectDailyForm() {
+                const v = id => document.getElementById(id).value;
+                return {
+                    timeStart: v('timeStart'), timeEnd: v('timeEnd'), workStatus: v('workStatus'),
+                    weatherMorning: v('weatherMorning'), weatherAfternoon: v('weatherAfternoon'), weatherEvening: v('weatherEvening'),
+                    labors: JSON.parse(JSON.stringify(this.currentLabors || [])),
+                    machines: JSON.parse(JSON.stringify(this.currentMachines || [])),
+                    photos: JSON.parse(JSON.stringify(this.currentPhotos || []))
+                };
+            }
+
+            compressImage(src, cb, max = 1280) {
+                const img = new Image();
+                img.onload = () => {
+                    const r = Math.min(1, max / Math.max(img.width, img.height));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    cb(c.toDataURL('image/jpeg', 0.75));
+                };
+                img.onerror = () => cb(src);
+                img.src = src;
+            }
+
+            fitReportToA4(type) {
+                const sheet = document.getElementById('reportPreviewContainer'), inner = document.getElementById('reportContent');
+                if (!sheet || !inner) return;
+                type = type || document.getElementById('reportSelector').value;
+                const m = type === 'memo' ? [25, 20, 20, 30] : [15, 15, 15, 15]; // บน ขวา ล่าง ซ้าย (มม.)
+                const px = 96 / 25.4;
+                sheet.style.padding = `${m[0]}mm ${m[1]}mm ${m[2]}mm ${m[3]}mm`;
+                const availW = (210 - m[1] - m[3]) * px, availH = (296 - m[0] - m[2]) * px;
+                let s = 1;
+                const apply = () => { inner.style.width = (availW / s) + 'px'; inner.style.transform = `scale(${s})`; };
+                apply();
+                for (let i = 0; i < 8; i++) {
+                    const h = inner.offsetHeight * s;
+                    if (h <= availH) break;
+                    s = Math.max(0.35, s * availH / h * 0.995); apply();
+                }
+                while (inner.offsetHeight * s > availH && s > 0.35) { s -= 0.01; apply(); }
+                inner.querySelectorAll('img').forEach(im => { if (!im.complete) im.addEventListener('load', () => this.fitReportToA4(type), { once: true }); });
+            }
+
+            saveData() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+                    this.showToast('บันทึกข้อมูลเรียบร้อยแล้ว', 'bg-emerald-600');
+                } catch (e) {
+                    this.showToast('บันทึกไม่สำเร็จ: พื้นที่เก็บข้อมูลเต็ม (ลองลดรูปถ่าย/สำรองข้อมูล)', 'bg-rose-600');
+                }
+            }
+
+            exportBackup() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `construction_backup_${todayISO()}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            }
+
+            importBackup(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (!imported || !Array.isArray(imported.workItems)) throw new Error('invalid');
+                        this.data = this.normalizeData(imported);
+                        this.saveData();
+                        this.initUI();
+                        this.renderReport();
+                        alert('กู้คืนข้อมูลสำเร็จเรียบร้อยแล้ว!');
+                    } catch (err) {
+                        alert('ไฟล์ข้อมูลไม่ถูกต้อง');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            }
+
+            resetDemoData() {
+                if (confirm('คุณต้องการโหลดข้อมูลตัวอย่าง Demo Data หรือไม่? (ข้อมูลปัจจุบันจะถูกเขียนทับ)')) {
+                    this.data = JSON.parse(JSON.stringify(defaultDemoProject));
+                    this.saveData();
+                    this.initUI();
+                    this.renderReport();
+                }
+            }
+
+            showToast(msg, bgClass = 'bg-blue-900') {
+                const toast = document.getElementById('toastMessage');
+                toast.className = `fixed bottom-5 right-5 text-white p-4 rounded-xl shadow-xl z-50 transition duration-300 ${bgClass}`;
+                toast.innerText = msg;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+
+            switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(tabId).classList.remove('hidden');
+                
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if (btn.dataset.target === tabId) {
+                        btn.className = 'tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap bg-blue-900 text-white';
+                    } else {
+                        btn.className = 'tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap text-slate-600 hover:bg-slate-100';
+                    }
+                });
+
+                if (tabId === 'tab4') {
+                    this.renderReport();
+                }
+            }
+
+            calculateCalendarWeeks() {
+                if (!this.data.startDate || !this.data.endDate) {
+                    return Array.from({ length: 12 }, (_, i) => ({
+                        weekNo: i + 1,
+                        startDate: '',
+                        endDate: '',
+                        label: `สัปดาห์ ${i + 1}`
+                    }));
+                }
+
+                const start = parseISO(this.data.startDate);
+                const end = parseISO(this.data.endDate);
+
+                if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+                    return Array.from({ length: 12 }, (_, i) => ({
+                        weekNo: i + 1,
+                        startDate: '',
+                        endDate: '',
+                        label: `สัปดาห์ ${i + 1}`
+                    }));
+                }
+
+                const weeks = [];
+                let currentStart = new Date(start);
+                let weekNo = 1;
+
+                while (currentStart <= end) {
+                    let currentEnd = new Date(currentStart);
+                    
+                    const dayOfWeek = currentStart.getDay();
+                    const daysToSunday = (0 - dayOfWeek + 7) % 7;
+                    
+                    currentEnd.setDate(currentStart.getDate() + daysToSunday);
+
+                    if (currentEnd > end) {
+                        currentEnd = new Date(end);
+                    }
+
+                    const formatShortDate = (d) => {
+                        const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+                    };
+
+                    weeks.push({
+                        weekNo: weekNo,
+                        startDate: toISO(currentStart),
+                        endDate: toISO(currentEnd),
+                        label: `${formatShortDate(currentStart)} - ${formatShortDate(currentEnd)}`
+                    });
+
+                    currentStart = new Date(currentEnd);
+                    currentStart.setDate(currentStart.getDate() + 1);
+                    weekNo++;
+                }
+
+                return weeks;
+            }
+
+            initUI() {
+                document.getElementById('govtDepartment').value = this.data.govtDepartment || '';
+                document.getElementById('documentNo').value = this.data.documentNo || '';
+                document.getElementById('reportTo').value = this.data.reportTo || '';
+                document.getElementById('letterDate').value = this.data.letterDate || '';
+                document.getElementById('subject').value = this.data.subject || '';
+                document.getElementById('projectName').value = this.data.projectName || '';
+                document.getElementById('constructionSite').value = this.data.constructionSite || '';
+                document.getElementById('employerName').value = this.data.employerName || '';
+                document.getElementById('contractorName').value = this.data.contractorName || '';
+                document.getElementById('contractNo').value = this.data.contractNo || '';
+                document.getElementById('contractDate').value = this.data.contractDate || '';
+                document.getElementById('budget').value = this.data.budget || '';
+                document.getElementById('contractDurationDays').value = this.data.contractDurationDays || '';
+                document.getElementById('startDate').value = this.data.startDate || '';
+                document.getElementById('endDate').value = this.data.endDate || '';
+                document.getElementById('fineRateType').value = this.data.fineRateType || 'PERCENT';
+                document.getElementById('fineRateValue').value = this.data.fineRateValue ?? 0.1;
+                document.getElementById('numberStyle').value = this.data.numberStyle || 'ARABIC';
+                document.getElementById('garudaHeight').value = this.data.garudaHeight || 1.5;
+                if (this.data.garudaImgUrl) {
+                    document.getElementById('garudaPreviewImg').src = this.data.garudaImgUrl;
+                }
+                document.getElementById('problemsAndObstacles').value = this.data.problemsAndObstacles || '';
+                document.getElementById('committeeComment').value = this.data.committeeComment || '';
+
+                const calendarWeeks = this.calculateCalendarWeeks();
+                const numWeeks = calendarWeeks.length;
+
+                this.data.workItems.forEach(item => {
+                    if (!Array.isArray(item.plan) || item.plan.length < numWeeks) {
+                        const oldPlan = item.plan || [];
+                        item.plan = Array.from({ length: numWeeks }, (_, i) => oldPlan[i] || 0);
+                    }
+                    if (!Array.isArray(item.actual) || item.actual.length < numWeeks) {
+                        const oldActual = item.actual || [];
+                        item.actual = Array.from({ length: numWeeks }, (_, i) => oldActual[i] || 0);
+                    }
+                });
+
+                this.updateBudget(this.data.budget);
+                this.renderStaffLists();
+                this.renderBoqTable();
+                this.renderPlanMatrixTable();
+                this.renderActualMatrixTable();
+                this.renderReportSelectorOptions();
+                this.loadDailyLogForDate(todayISO());
+            }
+
+            updateField(field, val) {
+                this.data[field] = val;
+            }
+
+            updateGarudaHeight(val) {
+                const num = parseFloat(val) || 1.5;
+                this.data.garudaHeight = num;
+                this.renderReport();
+            }
+
+            handleGarudaUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64 = e.target.result;
+                    this.data.garudaImgUrl = base64;
+                    document.getElementById('garudaPreviewImg').src = base64;
+                    this.showToast('อัปโหลดรูปตราครุฑสำเร็จ', 'bg-emerald-600');
+                    this.renderReport();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            updateBudget(val) {
+                const amount = parseFloat(val) || 0;
+                this.data.budget = amount;
+                document.getElementById('bahtTextDisplay').innerText = `ตัวอักษรไทย: ${bahtText(amount)}`;
+            }
+
+            updateDuration(val) {
+                this.data.contractDurationDays = parseInt(val, 10) || 0;
+                this.recalculateEndDate();
+            }
+
+            updateStartDate(val) {
+                this.data.startDate = val;
+                this.recalculateEndDate();
+            }
+
+            recalculateEndDate() {
+                if (this.data.startDate && this.data.contractDurationDays) {
+                    const start = parseISO(this.data.startDate);
+                    start.setDate(start.getDate() + this.data.contractDurationDays - 1);
+                    const endStr = toISO(start);
+                    this.data.endDate = endStr;
+                    document.getElementById('endDate').value = endStr;
+                    
+                    this.renderPlanMatrixTable();
+                    this.renderActualMatrixTable();
+                    this.renderReportSelectorOptions();
+                }
+            }
+
+            saveProjectData() {
+                this.saveData();
+            }
+
+            renderStaffLists() {
+                const supContainer = document.getElementById('supervisorList');
+                const conSupContainer = document.getElementById('contractorSupervisorList');
+                const comContainer = document.getElementById('committeeList');
+
+                const supervisors = this.data.staff.filter(s => s.role === 'SUPERVISOR');
+                const contractorSupervisors = this.data.staff.filter(s => s.role === 'CONTRACTOR_SUPERVISOR');
+                const committees = this.data.staff.filter(s => s.role !== 'SUPERVISOR' && s.role !== 'CONTRACTOR_SUPERVISOR');
+
+                supContainer.innerHTML = supervisors.map((s, idx) => `
+                    <div class="flex flex-col gap-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="ชื่อ-สกุล" value="${esc(s.name || '')}" oninput="app.updateStaff('SUPERVISOR', ${idx}, 'name', this.value)" class="w-1/2 p-1.5 border rounded text-xs">
+                            <input type="text" placeholder="ตำแหน่ง" value="${esc(s.position || '')}" oninput="app.updateStaff('SUPERVISOR', ${idx}, 'position', this.value)" class="w-1/2 p-1.5 border rounded text-xs">
+                            <button onclick="app.removeStaff('SUPERVISOR', ${idx})" class="text-rose-600 font-bold px-1 text-xs">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                conSupContainer.innerHTML = contractorSupervisors.map((s, idx) => `
+                    <div class="flex flex-col gap-1.5 p-2 bg-amber-50/60 rounded-lg border border-amber-200">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="ชื่อ-สกุล" value="${esc(s.name || '')}" oninput="app.updateStaff('CONTRACTOR_SUPERVISOR', ${idx}, 'name', this.value)" class="w-1/2 p-1.5 border rounded text-xs">
+                            <input type="text" placeholder="ตำแหน่ง" value="${esc(s.position || '')}" oninput="app.updateStaff('CONTRACTOR_SUPERVISOR', ${idx}, 'position', this.value)" class="w-1/2 p-1.5 border rounded text-xs">
+                            <button onclick="app.removeStaff('CONTRACTOR_SUPERVISOR', ${idx})" class="text-rose-600 font-bold px-1 text-xs">✕</button>
+                        </div>
+                        <div>
+                            <input type="text" placeholder="ใบอนุญาตประกอบวิชาชีพ (ถ้าไม่มีใส่ -)" value="${esc(s.licenseNo || '-')}" oninput="app.updateStaff('CONTRACTOR_SUPERVISOR', ${idx}, 'licenseNo', this.value)" class="w-full p-1.5 border rounded text-xs font-mono bg-white">
+                        </div>
+                    </div>
+                `).join('');
+
+                comContainer.innerHTML = committees.map((s, idx) => `
+                    <div class="flex flex-col gap-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="ชื่อ-สกุล" value="${esc(s.name || '')}" oninput="app.updateStaff('COMMITTEE', ${idx}, 'name', this.value)" class="w-1/3 p-1.5 border rounded text-xs">
+                            <input type="text" placeholder="ตำแหน่ง" value="${esc(s.position || '')}" oninput="app.updateStaff('COMMITTEE', ${idx}, 'position', this.value)" class="w-1/3 p-1.5 border rounded text-xs">
+                            <select onchange="app.updateStaff('COMMITTEE', ${idx}, 'role', this.value)" class="w-1/3 p-1.5 border rounded text-xs bg-white">
+                                <option value="COMMITTEE_CHAIRMAN" ${s.role === 'COMMITTEE_CHAIRMAN' ? 'selected' : ''}>ประธานกรรมการ</option>
+                                <option value="COMMITTEE_MEMBER" ${s.role === 'COMMITTEE_MEMBER' ? 'selected' : ''}>กรรมการ</option>
+                            </select>
+                            <button onclick="app.removeStaff('COMMITTEE', ${idx})" class="text-rose-600 font-bold px-1 text-xs">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            addStaff(role) {
+                if (role === 'SUPERVISOR') {
+                    this.data.staff.push({ role: 'SUPERVISOR', name: '', position: 'ผู้ควบคุมงาน', licenseNo: '-' });
+                } else if (role === 'CONTRACTOR_SUPERVISOR') {
+                    this.data.staff.push({ role: 'CONTRACTOR_SUPERVISOR', name: '', position: 'ผู้ควบคุมงานฝ่ายผู้รับจ้าง', licenseNo: '-' });
+                } else {
+                    this.data.staff.push({ role: 'COMMITTEE_MEMBER', name: '', position: 'กรรมการตรวจรับพัสดุ', licenseNo: '-' });
+                }
+                this.renderStaffLists();
+            }
+
+            updateStaff(type, index, field, value) {
+                let list = [];
+                if (type === 'SUPERVISOR') {
+                    list = this.data.staff.filter(s => s.role === 'SUPERVISOR');
+                } else if (type === 'CONTRACTOR_SUPERVISOR') {
+                    list = this.data.staff.filter(s => s.role === 'CONTRACTOR_SUPERVISOR');
+                } else {
+                    list = this.data.staff.filter(s => s.role !== 'SUPERVISOR' && s.role !== 'CONTRACTOR_SUPERVISOR');
+                }
+
+                if (list[index]) {
+                    list[index][field] = value;
+                }
+            }
+
+            removeStaff(type, index) {
+                let target = null;
+                if (type === 'SUPERVISOR') {
+                    target = this.data.staff.filter(s => s.role === 'SUPERVISOR')[index];
+                } else if (type === 'CONTRACTOR_SUPERVISOR') {
+                    target = this.data.staff.filter(s => s.role === 'CONTRACTOR_SUPERVISOR')[index];
+                } else {
+                    target = this.data.staff.filter(s => s.role !== 'SUPERVISOR' && s.role !== 'CONTRACTOR_SUPERVISOR')[index];
+                }
+
+                if (target) {
+                    this.data.staff = this.data.staff.filter(s => s !== target);
+                    this.renderStaffLists();
+                }
+            }
+
+            renderBoqTable() {
+                const tbody = document.getElementById('boqTableBody');
+                let totalWeight = 0;
+
+                tbody.innerHTML = this.data.workItems.map((item, idx) => {
+                    totalWeight += (parseFloat(item.weight) || 0);
+                    return `
+                        <tr>
+                            <td class="border p-2 text-center font-semibold">${idx + 1}</td>
+                            <td class="border p-2"><input type="text" value="${esc(item.group || '')}" oninput="app.updateBoq(${idx}, 'group', this.value)" class="w-full p-1 border rounded text-xs"></td>
+                            <td class="border p-2"><input type="text" value="${esc(item.name || '')}" oninput="app.updateBoq(${idx}, 'name', this.value)" class="w-full p-1 border rounded text-xs font-medium"></td>
+                            <td class="border p-2"><input type="text" value="${esc(item.unit || '')}" oninput="app.updateBoq(${idx}, 'unit', this.value)" class="w-full p-1 border rounded text-xs text-center"></td>
+                            <td class="border p-2"><input type="number" step="0.01" value="${item.qty || 0}" oninput="app.updateBoq(${idx}, 'qty', parseFloat(this.value))" class="w-full p-1 border rounded text-xs text-right"></td>
+                            <td class="border p-2"><input type="number" step="0.01" value="${item.weight || 0}" oninput="app.updateBoq(${idx}, 'weight', parseFloat(this.value))" class="w-full p-1 border rounded text-xs text-right font-bold text-blue-900"></td>
+                            <td class="border p-2 text-center"><button onclick="app.removeWorkItem(${idx})" class="text-rose-600 font-bold">✕</button></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                this.updateWeightBanner(totalWeight);
+            }
+
+            updateWeightBanner(totalWeight) {
+                const warningBox = document.getElementById('weightWarning');
+                const warningText = document.getElementById('weightText');
+                if (Math.abs(totalWeight - 100) < 0.01) {
+                    warningBox.className = 'p-3 rounded-lg text-sm font-semibold flex justify-between items-center bg-emerald-100 text-emerald-900 border border-emerald-300';
+                    warningText.innerText = `✅ น้ำหนักงานรวมสมบูรณ์ครบ 100.00%`;
+                } else {
+                    warningBox.className = 'p-3 rounded-lg text-sm font-semibold flex justify-between items-center bg-rose-100 text-rose-900 border border-rose-300';
+                    warningText.innerText = `⚠️ น้ำหนักงานรวมได้ ${totalWeight.toFixed(2)}% (ต้องได้ 100% พอดี - ขาด/เกิน ${(100 - totalWeight).toFixed(2)}%)`;
+                }
+            }
+
+            updateBoq(index, field, val) {
+                if (this.data.workItems[index]) {
+                    this.data.workItems[index][field] = val;
+                    if (field === 'weight') this.updateWeightBanner(this.data.workItems.reduce((s, x) => s + (parseFloat(x.weight) || 0), 0));
+                    if (field === 'weight' || field === 'qty') this.refreshMatrixFooters();
+                }
+            }
+
+            addWorkItem() {
+                this.data.workItems.push({
+                    id: Date.now().toString(),
+                    group: 'งานโครงสร้าง',
+                    name: '',
+                    unit: 'ตร.ม.',
+                    qty: 0,
+                    weight: 0,
+                    plan: Array(12).fill(0),
+                    actual: Array(12).fill(0)
+                });
+                this.renderBoqTable();
+                this.renderPlanMatrixTable();
+                this.renderActualMatrixTable();
+            }
+
+            removeWorkItem(index) {
+                this.data.workItems.splice(index, 1);
+                this.renderBoqTable();
+                this.renderPlanMatrixTable();
+                this.renderActualMatrixTable();
+            }
+
+            updatePlanQty(itemIdx, weekIdx, val) {
+                if (this.data.workItems[itemIdx]) {
+                    if (!Array.isArray(this.data.workItems[itemIdx].plan)) {
+                        this.data.workItems[itemIdx].plan = [];
+                    }
+                    this.data.workItems[itemIdx].plan[weekIdx] = isNaN(val) ? 0 : val;
+                    this.refreshMatrixFooters();
+                }
+            }
+
+            updateActualQty(itemIdx, weekIdx, val) {
+                if (this.data.workItems[itemIdx]) {
+                    if (!Array.isArray(this.data.workItems[itemIdx].actual)) {
+                        this.data.workItems[itemIdx].actual = [];
+                    }
+                    this.data.workItems[itemIdx].actual[weekIdx] = isNaN(val) ? 0 : val;
+                    this.refreshMatrixFooters();
+                }
+            }
+
+            renderReportSelectorOptions() {
+                const selector = document.getElementById('reportWeekSelector');
+                if (!selector) return;
+                const weeks = this.calculateCalendarWeeks();
+                let cur = parseInt(selector.value, 10);
+                if (!cur || cur > weeks.length) {
+                    const l = this.data.letterDate;
+                    const f = weeks.find(w => w.startDate && l && w.startDate <= l && l <= w.endDate);
+                    cur = f ? f.weekNo : 1;
+                }
+                selector.innerHTML = weeks.map(w => `<option value="${w.weekNo}" ${w.weekNo === cur ? 'selected' : ''}>สัปดาห์ที่ ${w.weekNo} (${w.label})</option>`).join('');
+            }
+
+            renderPlanMatrixTable() {
+                const headerRow = document.getElementById('planMatrixHeader');
+                const tbody = document.getElementById('planMatrixBody');
+                const tfoot = document.getElementById('planMatrixFooter');
+
+                const weeks = this.calculateCalendarWeeks();
+                const numWeeks = weeks.length;
+
+                document.getElementById('weekCountBadge').innerText = `จำนวนสัปดาห์สัญญา: ${numWeeks} สัปดาห์`;
+
+                let headerHTML = '<th class="border p-2 w-48 sticky left-0 bg-slate-100 z-10">รายการงาน (ปริมาณรวม)</th><th class="border p-2 w-16 text-center">น้ำหนัก%</th>';
+                weeks.forEach(w => {
+                    headerHTML += `<th class="border p-2 min-w-[90px] text-center text-xs">
+                        <div>สัปดาห์ ${w.weekNo}</div>
+                        <div class="text-[10px] font-normal text-slate-500">${w.label}</div>
+                    </th>`;
+                });
+                headerRow.innerHTML = headerHTML;
+
+                tbody.innerHTML = this.data.workItems.map((item, itemIdx) => `
+                    <tr>
+                        <td class="border p-2 sticky left-0 bg-white font-medium text-xs">
+                            ${esc(item.name) || 'ไม่ระบุชื่อ'} <span class="text-slate-400">(${item.qty} ${esc(item.unit)})</span>
+                        </td>
+                        <td class="border p-2 text-center font-bold text-xs text-blue-900">${item.weight || 0}%<span id="sumP${itemIdx}" class="block text-[10px]"></span></td>
+                        ${weeks.map((_, wIdx) => {
+                            const val = item.plan && item.plan[wIdx] !== undefined ? item.plan[wIdx] : 0;
+                            return `
+                                <td class="border p-1 text-center">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <input type="number" step="0.01" min="0" max="100" value="${val}" oninput="app.updatePlanQty(${itemIdx}, ${wIdx}, parseFloat(this.value))" class="w-14 p-1 border rounded text-xs text-center font-medium bg-blue-50/50">
+                                        <span class="text-[10px] text-slate-400">%</span>
+                                    </div>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `).join('');
+
+                this.refreshMatrixFooters();
+            }
+
+            renderActualMatrixTable() {
+                const headerRow = document.getElementById('actualMatrixHeader');
+                const tbody = document.getElementById('actualMatrixBody');
+                const tfoot = document.getElementById('actualMatrixFooter');
+
+                const weeks = this.calculateCalendarWeeks();
+                const numWeeks = weeks.length;
+
+                let headerHTML = '<th class="border p-2 w-48 sticky left-0 bg-slate-100 z-10">รายการงาน (ปริมาณรวม)</th><th class="border p-2 w-16 text-center">น้ำหนัก%</th>';
+                weeks.forEach(w => {
+                    headerHTML += `<th class="border p-2 min-w-[90px] text-center text-xs">
+                        <div>สัปดาห์ ${w.weekNo}</div>
+                        <div class="text-[10px] font-normal text-slate-500">${w.label}</div>
+                    </th>`;
+                });
+                headerRow.innerHTML = headerHTML;
+
+                tbody.innerHTML = this.data.workItems.map((item, itemIdx) => `
+                    <tr>
+                        <td class="border p-2 sticky left-0 bg-white font-medium text-xs">
+                            ${esc(item.name) || 'ไม่ระบุชื่อ'} <span class="text-slate-400">(${item.qty} ${esc(item.unit)})</span>
+                        </td>
+                        <td class="border p-2 text-center font-bold text-xs text-emerald-900">${item.weight || 0}%<span id="sumA${itemIdx}" class="block text-[10px]"></span></td>
+                        ${weeks.map((_, wIdx) => {
+                            const val = item.actual && item.actual[wIdx] !== undefined ? item.actual[wIdx] : 0;
+                            return `
+                                <td class="border p-1 text-center">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <input type="number" step="0.01" min="0" max="100" value="${val}" oninput="app.updateActualQty(${itemIdx}, ${wIdx}, parseFloat(this.value))" class="w-14 p-1 border rounded text-xs text-center font-medium bg-emerald-50/50">
+                                        <span class="text-[10px] text-slate-400">%</span>
+                                    </div>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `).join('');
+
+                this.refreshMatrixFooters();
+            }
+
+            loadDailyLogForDate(dateStr) {
+                document.getElementById('selectedLogDate').value = dateStr;
+                const log = (this.data.dailyLogs && this.data.dailyLogs[dateStr]) || {};
+
+                document.getElementById('timeStart').value = log.timeStart || '08:00';
+                document.getElementById('timeEnd').value = log.timeEnd || '17:00';
+                document.getElementById('workStatus').value = log.workStatus || 'NORMAL';
+                document.getElementById('weatherMorning').value = log.weatherMorning || 'แจ่มใส';
+                document.getElementById('weatherAfternoon').value = log.weatherAfternoon || 'มีเมฆบางส่วน';
+                document.getElementById('weatherEvening').value = log.weatherEvening || 'แจ่มใส';
+
+                this.currentLabors = log.labors ? JSON.parse(JSON.stringify(log.labors)) : [
+                    { type: 'วิศวกร/ผู้ควบคุมงาน', count: 1 },
+                    { type: 'ช่างฝีมือ', count: 4 },
+                    { type: 'คนงานทั่วไป', count: 8 }
+                ];
+
+                this.currentMachines = log.machines ? JSON.parse(JSON.stringify(log.machines)) : [
+                    { type: 'รถขุด PC200', count: 1, status: 'WORKING' },
+                    { type: 'รถบดสั่นสะเทือน', count: 1, status: 'READY' }
+                ];
+
+                this.currentPhotos = log.photos ? JSON.parse(JSON.stringify(log.photos)) : [];
+
+                this.renderLaborRows();
+                this.renderMachineRows();
+                this.renderPhotoGrid();
+            }
+
+            saveDailyLog() {
+                const dateStr = document.getElementById('selectedLogDate').value;
+                if (!dateStr) return;
+
+                if (!this.data.dailyLogs) this.data.dailyLogs = {};
+
+                this.data.dailyLogs[dateStr] = this.collectDailyForm();
+
+                this.saveData();
+            }
+
+            copyYesterdayLog() {
+                const dateStr = document.getElementById('selectedLogDate').value;
+                if (!dateStr) return;
+
+                const curDate = parseISO(dateStr);
+                curDate.setDate(curDate.getDate() - 1);
+                const prevDateStr = toISO(curDate);
+
+                const prevLog = this.data.dailyLogs && this.data.dailyLogs[prevDateStr];
+                if (!prevLog) {
+                    alert('ไม่พบข้อมูลบันทึกของเมื่อวาน (' + prevDateStr + ')');
+                    return;
+                }
+
+                this.currentLabors = prevLog.labors ? JSON.parse(JSON.stringify(prevLog.labors)) : [];
+                this.currentMachines = prevLog.machines ? JSON.parse(JSON.stringify(prevLog.machines)) : [];
+                this.renderLaborRows();
+                this.renderMachineRows();
+                this.showToast('คัดลอกข้อมูลแรงงานและเครื่องจักรจากเมื่อวานแล้ว', 'bg-amber-600');
+            }
+
+            renderLaborRows() {
+                const container = document.getElementById('laborRows');
+                container.innerHTML = this.currentLabors.map((l, idx) => `
+                    <div class="flex gap-2 items-center">
+                        <input type="text" value="${esc(l.type)}" placeholder="ประเภทแรงงาน" oninput="app.currentLabors[${idx}].type = this.value" class="flex-1 p-2 border rounded text-xs">
+                        <input type="number" value="${l.count}" oninput="app.currentLabors[${idx}].count = parseInt(this.value, 10) || 0" class="w-20 p-2 border rounded text-xs text-center font-bold">
+                        <span class="text-xs">คน</span>
+                        <button onclick="app.currentLabors.splice(${idx},1); app.renderLaborRows();" class="text-rose-600 font-bold px-2">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            addLaborRow() {
+                this.currentLabors.push({ type: '', count: 1 });
+                this.renderLaborRows();
+            }
+
+            renderMachineRows() {
+                const container = document.getElementById('machineRows');
+                container.innerHTML = this.currentMachines.map((m, idx) => `
+                    <div class="flex gap-2 items-center">
+                        <input type="text" value="${esc(m.type)}" placeholder="ชื่อเครื่องจักร/อุปกรณ์" oninput="app.currentMachines[${idx}].type = this.value" class="flex-1 p-2 border rounded text-xs">
+                        <input type="number" value="${m.count}" oninput="app.currentMachines[${idx}].count = parseInt(this.value, 10) || 0" class="w-16 p-2 border rounded text-xs text-center font-bold">
+                        <select onchange="app.currentMachines[${idx}].status = this.value" class="p-2 border rounded text-xs bg-white">
+                            <option value="WORKING" ${m.status === 'WORKING' ? 'selected' : ''}>ใช้งานปกติ</option>
+                            <option value="READY" ${m.status === 'READY' ? 'selected' : ''}>จอดสแตนด์บาย</option>
+                            <option value="REPAIR" ${m.status === 'REPAIR' ? 'selected' : ''}>ชำรุด/รอซ่อม</option>
+                        </select>
+                        <button onclick="app.currentMachines.splice(${idx},1); app.renderMachineRows();" class="text-rose-600 font-bold px-2">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            addMachineRow() {
+                this.currentMachines.push({ type: '', count: 1, status: 'WORKING' });
+                this.renderMachineRows();
+            }
+
+            handlePhotoUpload(e) {
+                const files = e.target.files;
+                if (!files) return;
+
+                if (this.currentPhotos.length + files.length > 6) {
+                    alert('แนบรูปถ่ายได้ไม่เกิน 6 รูปต่อวัน');
+                    return;
+                }
+
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        this.compressImage(reader.result, url => { this.currentPhotos.push({ url, caption: '' }); this.renderPhotoGrid(); });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            renderPhotoGrid() {
+                const container = document.getElementById('photoGrid');
+                container.innerHTML = this.currentPhotos.map((p, idx) => `
+                    <div class="border rounded-lg p-2 bg-slate-50 relative group">
+                        <img src="${p.url}" class="w-full h-28 object-cover rounded mb-2">
+                        <input type="text" value="${esc(p.caption || '')}" placeholder="คำบรรยายใต้ภาพ..." oninput="app.currentPhotos[${idx}].caption = this.value" class="w-full p-1 border rounded text-xs">
+                        <button onclick="app.currentPhotos.splice(${idx},1); app.renderPhotoGrid();" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            renderReport() {
+                const type = document.getElementById('reportSelector').value;
+                const calendarWeeks = this.calculateCalendarWeeks();
+                const numWeeks = calendarWeeks.length;
+                
+                let selectedWeek = parseInt(document.getElementById('reportWeekSelector').value, 10) || 1;
+                if (selectedWeek > numWeeks) selectedWeek = numWeeks;
+                
+                const currentWeekInfo = calendarWeeks[selectedWeek - 1] || { label: '', weekNo: selectedWeek };
+                const container = document.getElementById('reportContent');
+                const { dailyLogs: _dl, ...restData } = this.data;
+                const D = this.escapeDeep(restData);
+                D.problemsAndObstacles = String(D.problemsAndObstacles || '').replace(/\n/g, '<br>');
+                const isThaiNum = D.numberStyle === 'THAI';
+                const numFmt = n => { const s = typeof n === 'number' ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(n); return isThaiNum ? toThaiDigits(s) : s; };
+                const q2 = n => { const s = (Math.round(n * 100) / 100).toLocaleString('en-US'); return isThaiNum ? toThaiDigits(s) : s; };
+
+                const supervisors = D.staff.filter(s => s.role === 'SUPERVISOR');
+                const committees = D.staff.filter(s => s.role === 'COMMITTEE_CHAIRMAN' || s.role === 'COMMITTEE_MEMBER');
+
+                const P = this.calcProgress();
+                const planCumPct = P.planCum, actualCumPct = P.actualCum, diffCumPct = P.diffCum;
+
+                if (type === 'memo') {
+                    const garudaHeightCm = D.garudaHeight || 1.5;
+                    const garudaUrl = D.garudaImgUrl || 'https://upload.wikimedia.org/wikipedia/commons/8/89/%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%95%E0%B8%B2%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%B4%E0%B8%A9.svg';
+                    const cWIdx = selectedWeek - 1;
+
+                    container.innerHTML = `
+                        <div class="leading-normal text-slate-900" style="font-family: 'Sarabun', sans-serif; font-size: 15px;">
+                            <!-- Header Block: Garuda Emblem + Header Title -->
+                            <div class="relative flex items-end justify-center mb-3 min-h-[1.5cm]">
+                                <div class="absolute left-0 top-0">
+                                    <img src="${garudaUrl}" style="height: ${garudaHeightCm}cm;" class="object-contain">
+                                </div>
+                                <h1 class="font-bold text-2xl tracking-wider text-black">บันทึกข้อความ</h1>
+                            </div>
+
+                            <!-- Header Fields -->
+                            <div class="space-y-0.5 border-b border-black pb-1.5 mb-2">
+                                <div><span class="font-bold">ส่วนราชการ</span>&nbsp;${D.govtDepartment || ''}</div>
+                                <div class="grid grid-cols-2">
+                                    <div><span class="font-bold">ที่</span>&nbsp;${D.documentNo || ''}</div>
+                                    <div><span class="font-bold">วันที่</span>&nbsp;${formatThaiDate(D.letterDate, isThaiNum)}</div>
+                                </div>
+                                <div><span class="font-bold">เรื่อง</span>&nbsp;${D.subject || `รายงานผลการปฏิบัติงานโครงการ ประจำสัปดาห์ที่ ${selectedWeek}`}</div>
+                            </div>
+
+                            <!-- Attention Line -->
+                            <div class="pt-1 mb-2">
+                                <span class="font-bold">เรียน</span>&nbsp;${D.reportTo || ''}
+                            </div>
+
+                            <!-- Document Body -->
+                            <div class="space-y-1.5 text-justify leading-relaxed mb-3">
+                                <p style="text-indent: 2.5cm;">
+                                    ตามสัญญาจ้างเลขที่ ${D.contractNo || ''} ลงวันที่ ${formatThaiDate(D.contractDate, isThaiNum)} 
+                                    ${D.employerName || ''} ได้ว่าจ้าง ${D.contractorName || ''} ให้ดำเนินงานก่อสร้าง 
+                                    <span class="font-bold">${D.projectName || ''}</span> ณ ${D.constructionSite || ''} 
+                                    วงเงินงบประมาณ ${numFmt(Number(D.budget) || 0)} บาท ${bahtText(Number(D.budget) || 0)} นั้น
+                                </p>
+                                <p style="text-indent: 2.5cm;">
+                                    บัดนี้ ผู้รับจ้างได้ดำเนินงานก่อสร้างมาถึงสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) ผลการปฏิบัติงานมีร้อยละความก้าวหน้าสะสม ${numFmt(actualCumPct[cWIdx].toFixed(2))}% 
+                                    (แผนงานสะสม ${numFmt(planCumPct[cWIdx].toFixed(2))}%) คิดเป็นส่วนต่าง ${diffCumPct[cWIdx] >= 0 ? '+' : ''}${numFmt(diffCumPct[cWIdx].toFixed(2))}%
+                                </p>
+                                ${D.problemsAndObstacles ? `<p style="text-indent: 2.5cm;"><span class="font-bold">ปัญหาและอุปสรรค:</span> ${D.problemsAndObstacles}</p>` : ''}
+                                <p style="text-indent: 2.5cm;">
+                                    จึงเรียนมาเพื่อโปรดพิจารณาและโปรดทราบ
+                                </p>
+                            </div>
+
+                            <!-- Dynamic Supervisors Signatures (Strictly user-entered staff only) -->
+                            <div class="pt-2 mb-3">
+                                <div class="text-xs font-bold mb-1">ผู้ควบคุมงาน:</div>
+                                <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+                                    ${supervisors.length > 0 ? supervisors.map(s => `
+                                        <div class="text-center space-y-0.5">
+                                            <div class="h-7"></div>
+                                            <div>(ลงชื่อ)....................................................</div>
+                                            <div>(${s.name || '....................................................'})</div>
+                                            <div class="text-xs">${s.position || 'ผู้ควบคุมงาน'}</div>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="text-center space-y-0.5 col-span-2">
+                                            <div class="h-7"></div>
+                                            <div>(ลงชื่อ).................................................... ผู้ควบคุมงาน</div>
+                                            <div>(....................................................)</div>
+                                            <div class="text-xs">ตำแหน่ง ....................................................</div>
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Committees Signatures & Comments -->
+                            <div class="pt-2 border-t border-slate-300">
+                                <div class="text-xs font-bold mb-1">ความเห็นคณะกรรมการตรวจรับพัสดุ:</div>
+                                <div class="text-xs mb-2 pl-4">
+                                    ${D.committeeComment || 'รับทราบผลการปฏิบัติงานประจำสัปดาห์'}
+                                </div>
+                                <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+                                    ${committees.length > 0 ? committees.map(c => `
+                                        <div class="text-center space-y-0.5">
+                                            <div class="h-6"></div>
+                                            <div>(ลงชื่อ)....................................................</div>
+                                            <div>(${c.name || '....................................................'})</div>
+                                            <div class="text-xs">${c.position || 'กรรมการ'}</div>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="text-center space-y-0.5 col-span-2">
+                                            <div class="h-6"></div>
+                                            <div>(ลงชื่อ).................................................... ประธานกรรมการ</div>
+                                            <div>(....................................................)</div>
+                                            <div class="text-xs">ตำแหน่ง ....................................................</div>
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (type === 'weekly') {
+                    const cW = selectedWeek - 1;
+                    const sumW = D.workItems.reduce((s, x) => s + (parseFloat(x.weight) || 0), 0);
+                    const td = 'border border-slate-400 px-1 py-0.5';
+                    const rows = D.workItems.map((it, i) => {
+                        const q = parseFloat(it.qty) || 0, wt = parseFloat(it.weight) || 0;
+                        const pq = (it.plan || []).slice(0, selectedWeek).reduce((s, x) => s + (parseFloat(x) || 0), 0);
+                        const aq = (it.actual || []).slice(0, selectedWeek).reduce((s, x) => s + (parseFloat(x) || 0), 0);
+                        const pp = Math.min(pq, 100) / 100 * wt, ap = Math.min(aq, 100) / 100 * wt;
+                        return `<tr><td class="${td} text-center">${numFmt(i + 1).replace(/\.00$/, '')}</td><td class="${td}">${D.workItems[i].name}</td><td class="${td} text-center">${D.workItems[i].unit}</td>
+                            <td class="${td} text-right">${q2(q)}</td><td class="${td} text-right">${q2(wt)}</td><td class="${td} text-right">${q2(Math.min(pq, 100))}%</td><td class="${td} text-right">${q2(Math.min(aq, 100))}%</td>
+                            <td class="${td} text-right">${numFmt(pp.toFixed(2))}</td><td class="${td} text-right font-bold">${numFmt(ap.toFixed(2))}</td></tr>`;
+                    }).join('');
+                    container.innerHTML = `
+                        <div class="space-y-3" style="font-size: 14px;">
+                            <div class="text-center space-y-1">
+                                <h2 class="text-xl font-bold">รายงานผลการปฏิบัติงานประจำสัปดาห์</h2>
+                                <p class="font-semibold">${D.projectName}</p>
+                                <p class="text-xs text-slate-600">ประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) | ${D.contractNo} | ผู้รับจ้าง: ${D.contractorName}</p>
+                            </div>
+                            <table class="w-full text-xs border-collapse border border-slate-400">
+                                <thead class="bg-slate-200 font-bold text-center"><tr>
+                                    <th class="${td}">ที่</th><th class="${td}">รายการงาน</th><th class="${td}">หน่วย</th><th class="${td}">ปริมาณรวม</th><th class="${td}">น้ำหนัก%</th>
+                                    <th class="${td}">แผนสะสม (% ของงานข้อนี้)</th><th class="${td}">ผลสะสม (% ของงานข้อนี้)</th><th class="${td}">แผนสะสม (% โครงการ)</th><th class="${td}">ผลสะสม (% โครงการ)</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                                <tfoot class="font-bold bg-slate-100"><tr><td class="${td} text-center" colspan="4">รวม</td><td class="${td} text-right">${q2(sumW)}</td><td class="${td}" colspan="2"></td>
+                                    <td class="${td} text-right">${numFmt((planCumPct[cW] || 0).toFixed(2))}</td><td class="${td} text-right">${numFmt((actualCumPct[cW] || 0).toFixed(2))}</td></tr></tfoot>
+                            </table>
+                            <div class="grid grid-cols-3 gap-3 text-center text-sm">
+                                <div class="border border-slate-300 rounded p-2">แผนงานสะสม<br><b>${numFmt((planCumPct[cW] || 0).toFixed(2))}%</b></div>
+                                <div class="border border-slate-300 rounded p-2">ผลงานสะสม<br><b>${numFmt((actualCumPct[cW] || 0).toFixed(2))}%</b></div>
+                                <div class="border border-slate-300 rounded p-2">ส่วนต่าง<br><b>${(diffCumPct[cW] || 0) >= 0 ? '+' : ''}${numFmt((diffCumPct[cW] || 0).toFixed(2))}%</b></div>
+                            </div>
+                            ${D.problemsAndObstacles ? `<div class="text-sm"><b>ปัญหาและอุปสรรค:</b><div class="pl-4">${D.problemsAndObstacles}</div></div>` : ''}
+                        </div>
+                    `;
+                } else if (type === 'daily') {
+                    const dateStr = document.getElementById('selectedLogDate').value;
+                    const log = this.escapeDeep(this.collectDailyForm());
+                    const contractorSupervisors = D.staff.filter(s => s.role === 'CONTRACTOR_SUPERVISOR');
+
+                    container.innerHTML = `
+                        <div class="space-y-4" style="font-family: 'Sarabun', sans-serif;">
+                            <div class="text-center border-b border-slate-300 pb-3">
+                                <h2 class="text-xl font-bold">รายงานผลการปฏิบัติงานประจำวัน (Daily Report)</h2>
+                                <p class="text-sm font-semibold text-blue-900">${D.projectName || ''}</p>
+                                <p class="text-xs text-slate-600">ประจำวันที่ ${formatThaiDate(dateStr, isThaiNum)} | สัญญาจ้างเลขที่: ${D.contractNo || '-'}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 text-xs gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <div><b>เวลาปฏิบัติงาน:</b> ${log.timeStart || '08:00'} ถึง ${log.timeEnd || '17:00'} น.</div>
+                                <div><b>สถานะหน้างาน:</b> ${log.workStatus === 'NORMAL' ? 'ปฏิบัติงานปกติ' : log.workStatus === 'STOP_RAIN' ? 'ฝนตกหนักหยุดงานบางส่วน' : 'วันหยุดประจำสัปดาห์/นักขัตฤกษ์'}</div>
+                                <div><b>สภาพอากาศช่วงเช้า:</b> ${log.weatherMorning || 'แจ่มใส'}</div>
+                                <div><b>สภาพอากาศช่วงบ่าย-เย็น:</b> บ่าย ${log.weatherAfternoon || 'แจ่มใส'} / เย็น ${log.weatherEvening || 'แจ่มใส'}</div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                                <div class="border border-slate-300 rounded-lg p-3 space-y-1">
+                                    <h4 class="font-bold text-slate-800 border-b pb-1">👷‍♂️ บุคลากรและแรงงานปฏิบัติงาน:</h4>
+                                    ${(log.labors && log.labors.length > 0) ? log.labors.map(l => `<div class="flex justify-between"><span>• ${l.type}</span><span class="font-semibold">${l.count} คน</span></div>`).join('') : '<div class="text-slate-400">ไม่มีข้อมูลแรงงาน</div>'}
+                                </div>
+                                <div class="border border-slate-300 rounded-lg p-3 space-y-1">
+                                    <h4 class="font-bold text-slate-800 border-b pb-1">🚜 เครื่องจักรและอุปกรณ์:</h4>
+                                    ${(log.machines && log.machines.length > 0) ? log.machines.map(m => `<div class="flex justify-between"><span>• ${m.type}</span><span class="font-semibold">${m.count} เครื่อง (${m.status === 'WORKING' ? 'ทำงาน' : m.status === 'READY' ? 'สแตนด์บาย' : 'ซ่อมบำรุง'})</span></div>`).join('') : '<div class="text-slate-400">ไม่มีข้อมูลเครื่องจักร</div>'}
+                                </div>
+                            </div>
+
+                            ${(log.photos && log.photos.length > 0) ? `
+                                <div class="border border-slate-300 rounded-lg p-3 space-y-2">
+                                    <h4 class="font-bold text-xs text-slate-800 border-b pb-1">📷 ภาพถ่ายการปฏิบัติงานประจำวัน:</h4>
+                                    <div class="grid grid-cols-3 gap-3">
+                                        ${log.photos.map(p => `
+                                            <div class="text-center">
+                                                <img src="${p.url}" class="w-full h-[3.4cm] object-cover rounded border">
+                                                <p class="text-[10px] mt-1 text-slate-600">${p.caption || ''}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <!-- Dynamic Dual Signatures Block (Employer & Contractor) -->
+                            <div class="pt-6 border-t border-slate-300 space-y-6">
+                                <div class="grid grid-cols-2 gap-8 text-xs">
+                                    <!-- ฝ่ายผู้ว่าจ้าง (Supervisors) -->
+                                    <div class="space-y-4">
+                                        <div class="font-bold text-slate-900 border-b pb-1">ผู้ควบคุมงาน (ฝ่ายผู้ว่าจ้าง / เจ้าหน้าที่):</div>
+                                        ${supervisors.length > 0 ? supervisors.map(s => `
+                                            <div class="text-center space-y-1 py-1">
+                                                <div>(ลงชื่อ)............................................................................</div>
+                                                <div class="font-semibold">(${s.name || '....................................................................'})</div>
+                                                <div class="text-slate-600">${s.position || 'ผู้ควบคุมงาน'}</div>
+                                            </div>
+                                        `).join('') : `
+                                            <div class="text-center space-y-1 py-1">
+                                                <div>(ลงชื่อ)............................................................................</div>
+                                                <div>(....................................................................)</div>
+                                                <div class="text-slate-600">ตำแหน่ง ผู้ควบคุมงาน</div>
+                                            </div>
+                                        `}
+                                    </div>
+
+                                    <!-- ฝ่ายผู้รับจ้าง (Contractor Supervisors) -->
+                                    <div class="space-y-4">
+                                        <div class="font-bold text-slate-900 border-b pb-1">ผู้ควบคุมงาน (ฝ่ายผู้รับจ้าง / ช่างผู้ควบคุมงาน):</div>
+                                        ${contractorSupervisors.length > 0 ? contractorSupervisors.map(cs => `
+                                            <div class="text-center space-y-1 py-1">
+                                                <div>(ลงชื่อ)............................................................................</div>
+                                                <div class="font-semibold">(${cs.name || '....................................................................'})</div>
+                                                <div class="text-slate-600">${cs.position || 'ผู้ควบคุมงานฝ่ายผู้รับจ้าง'}</div>
+                                                <div class="text-[11px] text-slate-500 font-mono">ใบอนุญาตประกอบวิชาชีพ: ${cs.licenseNo || '-'}</div>
+                                            </div>
+                                        `).join('') : `
+                                            <div class="text-center space-y-1 py-1">
+                                                <div>(ลงชื่อ)............................................................................</div>
+                                                <div>(....................................................................)</div>
+                                                <div class="text-slate-600">ตำแหน่ง ผู้ควบคุมงานฝ่ายผู้รับจ้าง</div>
+                                                <div class="text-[11px] text-slate-500">ใบอนุญาตประกอบวิชาชีพ: -</div>
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (type === 'scurve') {
+                    const currentWeekIndex = selectedWeek - 1;
+                    const latestPlan = planCumPct[currentWeekIndex] || 0;
+                    const latestActual = actualCumPct[currentWeekIndex] || 0;
+                    const diff = latestActual - latestPlan;
+                    const endD = parseISO(D.endDate), wkEnd = parseISO(currentWeekInfo.endDate);
+                    const remainDays = (isNaN(endD) || isNaN(wkEnd)) ? 0 : Math.max(0, Math.round((endD - wkEnd) / 864e5));
+
+                    const svgWidth = 720;
+                    const svgHeight = 320;
+                    const paddingLeft = 45;
+                    const paddingRight = 25;
+                    const paddingTop = 30;
+                    const paddingBottom = 45;
+                    
+                    const chartW = svgWidth - paddingLeft - paddingRight;
+                    const chartH = svgHeight - paddingTop - paddingBottom;
+                    const labelStep = Math.ceil(numWeeks / 13);
+
+                    const getX = (wIdx) => paddingLeft + (wIdx / (numWeeks > 1 ? numWeeks - 1 : 1)) * chartW;
+                    const getY = (val) => svgHeight - paddingBottom - (Math.min(Math.max(val, 0), 100) / 100) * chartH;
+
+                    const planPointsStr = planCumPct.map((val, idx) => `${getX(idx)},${getY(val)}`).join(' ');
+                    
+                    const actualSlice = actualCumPct.slice(0, selectedWeek);
+                    const actualPointsStr = actualSlice.map((val, idx) => `${getX(idx)},${getY(val)}`).join(' ');
+
+                    const firstX = getX(0);
+                    const lastActualX = getX(currentWeekIndex);
+                    const zeroY = getY(0);
+                    const actualAreaPath = actualSlice.length > 0 
+                        ? `M ${firstX},${zeroY} L ${actualPointsStr} L ${lastActualX},${zeroY} Z` 
+                        : '';
+
+                    let statusBadge = '';
+                    let statusText = '';
+                    if (diff >= 0) {
+                        statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-3 py-1 rounded-full text-xs shadow-sm flex items-center gap-1"><span>✅</span> เร็วกว่าแผนงาน</span>';
+                        statusText = `ผลการปฏิบัติงานประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) มีความก้าวหน้าสะสมร้อยละ ${latestActual.toFixed(2)} ซึ่งเร็วกว่าแผนงานที่กำหนดไว้ร้อยละ ${Math.abs(diff).toFixed(2)}`;
+                    } else if (Math.abs(diff) <= 3) {
+                        statusBadge = '<span class="bg-amber-50 text-amber-700 border border-amber-200 font-bold px-3 py-1 rounded-full text-xs shadow-sm flex items-center gap-1"><span>⚠️</span> เป็นไปตามแผนงาน (ตามหลังเล็กน้อย)</span>';
+                        statusText = `ผลการปฏิบัติงานประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) มีความก้าวหน้าสะสมร้อยละ ${latestActual.toFixed(2)} ซึ่งตามหลังแผนงานเล็กน้อยร้อยละ ${Math.abs(diff).toFixed(2)}`;
+                    } else {
+                        statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200 font-bold px-3 py-1 rounded-full text-xs shadow-sm flex items-center gap-1"><span>🛑</span> ล่าช้ากว่าแผนงาน</span>';
+                        statusText = `ผลการปฏิบัติงานประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) มีความก้าวหน้าสะสมร้อยละ ${latestActual.toFixed(2)} ล่าช้ากว่าแผนงานร้อยละ ${Math.abs(diff).toFixed(2)}`;
+                    }
+
+                    container.innerHTML = `
+                        <div class="space-y-6" style="font-family: 'Sarabun', sans-serif;">
+                            <div class="text-center space-y-1 border-b pb-4">
+                                <h2 class="text-xl font-bold text-slate-800">รายงานแผนภูมิความก้าวหน้าโครงการ (S-Curve Chart)</h2>
+                                <p class="text-base font-semibold text-blue-900">${D.projectName}</p>
+                                <p class="text-xs text-slate-500">รายงานประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}) | สัญญาจ้างเลขที่ ${D.contractNo} | สถานที่ก่อสร้าง: ${D.constructionSite}</p>
+                            </div>
+
+                            <!-- Executive Summary Dashboard -->
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200 text-center shadow-sm">
+                                    <div class="text-xs font-semibold text-slate-500 mb-1">แผนงานสะสม (สัปดาห์ที่ ${selectedWeek})</div>
+                                    <div class="text-2xl font-bold text-blue-600">${latestPlan.toFixed(2)}<span class="text-xs text-slate-400 font-normal"> %</span></div>
+                                </div>
+                                <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-100 text-center shadow-sm">
+                                    <div class="text-xs font-semibold text-emerald-800 mb-1">ผลงานจริงสะสม (สัปดาห์ที่ ${selectedWeek})</div>
+                                    <div class="text-2xl font-bold text-emerald-600">${latestActual.toFixed(2)}<span class="text-xs text-slate-400 font-normal"> %</span></div>
+                                </div>
+                                <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200 text-center shadow-sm">
+                                    <div class="text-xs font-semibold text-slate-500 mb-1">ส่วนต่างเปรียบเทียบ (+/-)</div>
+                                    <div class="text-2xl font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                        ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}<span class="text-xs font-normal text-slate-400"> %</span>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200 text-center shadow-sm">
+                                    <div class="text-xs font-semibold text-slate-500 mb-1">ระยะเวลาคงเหลือ (นับจากสิ้นสุดสัปดาห์นี้)</div>
+                                    <div class="text-2xl font-bold text-slate-700">${remainDays} <span class="text-xs text-slate-400 font-normal">วัน</span></div>
+                                </div>
+                            </div>
+
+                            <!-- S-Curve Clean & Comfortable Card -->
+                            <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm space-y-3">
+                                <div class="flex flex-wrap justify-between items-center px-1 pb-2 border-b border-slate-100 gap-2">
+                                    <div class="flex items-center gap-5 text-xs font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-3.5 h-1 bg-blue-600 rounded-full inline-block"></span>
+                                            <span class="text-slate-600">แผนงานสะสม (Plan)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-3.5 h-1 bg-emerald-600 rounded-full inline-block"></span>
+                                            <span class="text-slate-600">ผลงานจริงสะสม (ถึงสัปดาห์ที่ ${selectedWeek})</span>
+                                        </div>
+                                    </div>
+                                    <div>${statusBadge}</div>
+                                </div>
+
+                                <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-auto overflow-visible">
+                                    <!-- Light Background Grid Lines -->
+                                    ${[0, 20, 40, 60, 80, 100].map(yVal => `
+                                        <line x1="${paddingLeft}" y1="${getY(yVal)}" x2="${svgWidth - paddingRight}" y2="${getY(yVal)}" stroke="#f1f5f9" stroke-width="1.5" />
+                                        <text x="${paddingLeft - 10}" y="${getY(yVal) + 3}" fill="#94a3b8" font-size="11" font-weight="500" text-anchor="end">${yVal}%</text>
+                                    `).join('')}
+
+                                    <!-- Week Vertical Guidelines -->
+                                    ${calendarWeeks.map((w, idx) => `
+                                        <line x1="${getX(idx)}" y1="${paddingTop}" x2="${getX(idx)}" y2="${svgHeight - paddingBottom}" stroke="#f8fafc" stroke-width="1.5" />
+                                        <text x="${getX(idx)}" y="${svgHeight - paddingBottom + 18}" fill="${w.weekNo === selectedWeek ? '#0284c7' : '#64748b'}" font-size="10" font-weight="${w.weekNo === selectedWeek ? 'bold' : '500'}" text-anchor="middle">${(idx % labelStep === 0 || w.weekNo === selectedWeek) ? w.weekNo : ''}</text>
+                                    `).join('')}
+
+                                    <!-- Actual Progress Soft Area Background -->
+                                    ${actualAreaPath ? `<path d="${actualAreaPath}" fill="#10b981" fill-opacity="0.06" />` : ''}
+
+                                    <!-- Plan Line (Blue Dashed - All Weeks) -->
+                                    <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="5,4" points="${planPointsStr}" stroke-linecap="round" stroke-linejoin="round" />
+                                    ${planCumPct.map((val, idx) => `
+                                        <circle cx="${getX(idx)}" cy="${getY(val)}" r="3" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" />
+                                    `).join('')}
+
+                                    <!-- Actual Line (Emerald Green - Up to selectedWeek) -->
+                                    ${actualPointsStr ? `<polyline fill="none" stroke="#059669" stroke-width="3" points="${actualPointsStr}" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+                                    ${actualSlice.map((val, idx) => `
+                                        <circle cx="${getX(idx)}" cy="${getY(val)}" r="4" fill="#059669" stroke="#ffffff" stroke-width="2" />
+                                        ${idx === currentWeekIndex ? `
+                                            <g transform="translate(${getX(idx)}, ${getY(val) - 14})">
+                                                <rect x="-18" y="-12" width="36" height="15" rx="4" fill="#059669" />
+                                                <text x="0" y="-1" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">${val.toFixed(1)}%</text>
+                                            </g>
+                                        ` : ''}
+                                    `).join('')}
+                                </svg>
+                            </div>
+
+                            <!-- Official Analysis Note -->
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm leading-relaxed text-slate-700 space-y-1.5">
+                                <h4 class="font-bold text-slate-800">สรุปความเห็นการควบคุมงานประจำสัปดาห์ที่ ${selectedWeek} (${currentWeekInfo.label}):</h4>
+                                <p style="text-indent: 2.5cm;">${statusText} โดยผู้รับจ้างได้เตรียมความพร้อมของเครื่องจักรและกำลังคนในการดำเนินงานในสัปดาห์ถัดไปอย่างต่อเนื่อง</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                this.fitReportToA4(type);
+            }
+        }
+
+        // Initialize application instance on DOM load
+        window.addEventListener('DOMContentLoaded', () => {
+            window.app = new ConstructionApp();
+            window.addEventListener('beforeprint', () => window.app.fitReportToA4());
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => window.app.fitReportToA4());
+        });
+    </script>
+</body>
+</html>
